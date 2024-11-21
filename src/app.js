@@ -21,4 +21,10 @@ app.use(express.urlencoded({
 //static files like images
 app.use(express.static("public"))
 
+//import routes
+import userRouter from "./routes/user.routes.js";
+
+//routes declaration
+app.use("/users", userRouter);
+
 export {app};
