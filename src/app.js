@@ -18,13 +18,14 @@ app.use(express.urlencoded({
     extended: true,
     limit: "16kb"
 }))
-//static files like images
 app.use(express.static("public"))
+app.use(cookieParser())
+//static files like images
 
 //import routes
 import userRouter from "./routes/user.routes.js";
 
 //routes declaration
-app.use("/users", userRouter);
+app.use("/api/v1/users", userRouter)
 
 export {app};
