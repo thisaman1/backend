@@ -178,7 +178,7 @@ const logoutUser = asyncHandler(async (req,res)=>{
     )
 })
 
-const accessRefreshToken = asyncHandler(async(req,res)=>{
+const refreshAccessToken = asyncHandler(async(req,res)=>{
     const incomingRefreshToken = req.cookies?.refreshToken ||  req.body?.refreshToken;
 
     if(!incomingRefreshToken){
@@ -220,8 +220,11 @@ const accessRefreshToken = asyncHandler(async(req,res)=>{
 
 })
 
+
+
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 }
