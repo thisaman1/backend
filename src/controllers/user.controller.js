@@ -4,6 +4,7 @@ import {ApiError} from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {isEmpty,isValidEmail,isValidPassword} from "../utils/validations.js"
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 import { trusted } from "mongoose";
 
@@ -220,11 +221,39 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
 
 })
 
+const changeCurrentPassword = asyncHandler(async(req,res)=>{
+    const {oldPassword,newPassword} = req.body;
 
+    const user = await User.findById(req.user?._id);
+    if(!user){
+        throw new ApiError(401,"Unauthorized Access");
+    }
+
+    if(await !user.isPasswordCorrect(oldPassword)){
+        throw new ApiError(401,"Wrong Password")
+    }
+
+    if(!isValidPassword(newPassword)){
+        throw new ApiError(401,"Password length should be between 6-20 and must contain 1 digit,1 lowercase and uppercase English character and 1 special character.");
+    }
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave: false});
+
+    return res.status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Password changed Successfully"
+        )
+    )
+})
 
 export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword
 }
