@@ -25,13 +25,17 @@ const userSchema = new Schema(
         trim: true,
         index: true
     },
-    avatar:{
-        type: String,    //cloudinary link
-        required: true
-    },
-    coverImage:{
-        type: String    //cloudinary link
-    },
+    avatar:[  //url,public_id(needed to delete when updating)
+        {
+            type: String,    //cloudinary link
+            required: true
+        }
+    ],
+    coverImage:[
+        {
+            type: String   //cloudinary link
+        } 
+    ],
     password:{
         type: String,
         required: [true, 'Password is required']
