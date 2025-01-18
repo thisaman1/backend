@@ -22,6 +22,7 @@ const generateAccessTokenAndRefreshToken= async(user_id)=>{
         throw new ApiError(500,"Something went wrong");
     }
 }
+
 const registerUser = asyncHandler(async (req,res) => {
 
     if (!req.files || !req.files.avatar ) {
@@ -268,7 +269,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"All details are required");
     }
 
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.body?._id,
         {
             $set:{
@@ -300,7 +301,7 @@ const updateAvatarImage = asyncHandler(async(req,res)=>{
     }
 
     await deleteFromCloudinary(req.user.avatar[1]);
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user._id,
         {
             $set:{
@@ -314,10 +315,48 @@ const updateAvatarImage = asyncHandler(async(req,res)=>{
 
     return res.status(200)
     .json(
-        new ApiResponse(200,{},"Avatar Updated Successfully")
+        new ApiResponse(200,user,"Avatar Updated Successfully")
     )
 })
 
+const updateCoverImage = asyncHandler(async(req,res)=>{
+    if(!req.user){
+        throw new ApiError(400,"Please login again!");
+    }
+
+    const coverImageLocalPath = req.file?.path;
+
+    if(!coverImageLocalPath){
+        throw new ApiError(400,"No file Uploaded");
+    }
+
+    const coverImage = await uploadToCloudinary(coverImageLocalPath);
+    if(!coverImage?.url){
+        throw new ApiError(400,"Upload to Cloudinary failed")
+    }
+
+    if(req.user.coverImage[1]!== ""){
+        await deleteFromCloudinary(req.user.coverImage[1]);
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set:{
+                coverImage: [coverImage.url,coverImage.public_id]
+            }
+        },
+        {
+            new: true
+        }
+    ).select("-password");
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,user,"Cover Image Updated Successfully")
+    )
+
+})
 
 export {
     registerUser,
@@ -325,6 +364,8 @@ export {
     logoutUser,
     refreshAccessToken,
     changeCurrentPassword,
+    getCurrentUser,
     updateAccountDetails,
-    updateAvatarImage
+    updateAvatarImage,
+    updateCoverImage
 }
