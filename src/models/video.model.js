@@ -13,14 +13,18 @@ const videoSchema = new Schema(
             required: true,
             trim: true
         },
-        videoFile:{
-            type: String, //cloudinary link
-            required: true
-        },
-        thumbnail:{
-            type: String, //cloudinary link
-            required: true
-        },
+        videoFile:[
+            {
+                type: String, //cloudinary link
+                required: true
+            }
+        ],
+        thumbnail:[
+            {
+                type: String, //cloudinary link
+                required: true
+            }
+        ],
         duration:{
             type: Number,
             required: true

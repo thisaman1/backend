@@ -41,13 +41,13 @@ const publishAVideo = asyncHandler(async (req,res)=>{
     const video = await Video.create({
         title,
         description,
-        videoFile: _video.url,
-        thumbnail: _thumbnail.url,
+        videoFile: [_video.url,_video.public_id],
+        thumbnail: [_thumbnail.url,_thumbnail.public_id],
         duration: _video.duration,
         views: 0,
         isPublished: true,
         owner: user
-    })
+    });
 
     if(!video)throw new ApiError(400,"Something Went wrong");
 
