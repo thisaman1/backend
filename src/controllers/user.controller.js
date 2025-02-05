@@ -27,8 +27,7 @@ const registerUser = asyncHandler(async (req,res) => {
 
     if (!req.files || !req.files.avatar ) {
         // console.log(req);
-        res.status(400);
-        throw new Error("Files not uploaded correctly");
+        throw new ApiError(400,"Files not uploaded correctly");
     }
     
     //get user details from frontend
@@ -424,7 +423,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
 
     return res.status(200)
     .json(
-        new ApiResponse(200,channel[0],"user channel fetched");
+        new ApiResponse(200,channel[0],"user channel fetched")
     )
 })
 
