@@ -3,7 +3,7 @@ import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {isEmpty,isValidEmail,isValidPassword} from "../utils/validations.js"
-import { uploadToCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js";
+import { uploadToCloudinary, deleteVideoFromCloudinary, deleteImageFromCloudinary} from "../utils/cloudinary.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 import { trusted } from "mongoose";
@@ -71,9 +71,8 @@ const registerUser = asyncHandler(async (req,res) => {
     }
     
     if(!avatarImageLocalPath)throw new ApiError(407,"Avatar Image is required");
-    
-    const avatar = await uploadToCloudinary(avatarImageLocalPath);
-    const coverImage = await uploadToCloudinary(coverImageLocalPath);
+    const avatar = await uploadToCloudinary(avatarImageLocalPath,process.env.AVATAR_CLOUDINARY_PATH);
+    const coverImage = await uploadToCloudinary(coverImageLocalPath,process.env.COVERIMAGE_CLOUDINARY_PATH);
 
     // console.log(avatar);
     if(!avatar){
@@ -294,12 +293,12 @@ const updateAvatarImage = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"No file Uploaded");
     }
 
-    const avatar = await uploadToCloudinary(avatarImageLocalPath);
+    const avatar = await uploadToCloudinary(avatarImageLocalPath,process.env.AVATAR_CLOUDINARY_PATH);
     if(!avatar?.url){
         throw new ApiError(400,"Upload to Cloudinary failed")
     }
 
-    await deleteFromCloudinary(req.user.avatar[1]);
+    await deleteImageFromCloudinary(req.user.avatar[1],process.env.AVATAR_CLOUDINARY_PATH);
     const user = await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -329,13 +328,13 @@ const updateCoverImage = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"No file Uploaded");
     }
 
-    const coverImage = await uploadToCloudinary(coverImageLocalPath);
+    const coverImage = await uploadToCloudinary(coverImageLocalPath,process.env.COVERIMAGE_CLOUDINARY_PATH);
     if(!coverImage?.url){
         throw new ApiError(400,"Upload to Cloudinary failed")
     }
 
     if(req.user.coverImage[1]!== ""){
-        await deleteFromCloudinary(req.user.coverImage[1]);
+        await deleteImageFromCloudinary(req.user.coverImage[1],process.env.COVERIMAGE_CLOUDINARY_PATH);
     }
 
     const user = await User.findByIdAndUpdate(
