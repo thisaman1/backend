@@ -381,7 +381,7 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
                 from: "subscriptions",
                 localField: "_id",
                 foreignField: "subscriber",
-                as: "subscriberTo"
+                as: "subscribedTo"
             }
         },
         {
@@ -408,14 +408,14 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
                 email:1,
                 avatar:1,
                 coverImage:1,
-                subscriberCount,
-                subscribedToCount,
-                isSubscribed
+                subscriberCount:1,
+                subscribedToCount:1,
+                isSubscribed:1
             }
         }
     ]);
 
-    console.log(channel);
+    // console.log(channel);
     if(!channel.length){
         throw new ApiError(400,"Channel doesn't exist");
     }

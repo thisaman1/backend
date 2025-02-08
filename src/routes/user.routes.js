@@ -38,6 +38,6 @@ router.route("/get-current-user").get(verifyJwt,getCurrentUser);
 router.route("/update-account-details").post(verifyJwt,updateAccountDetails);
 router.route("/update-avatar-image").post(verifyJwt,upload.single("avatar"),updateAvatarImage);
 router.route("/update-cover-image").post(verifyJwt,upload.single("coverImage"),updateCoverImage);
-router.route("/c/:username").post(verifyJwt,getUserChannelProfile);
+router.route("/c/:userName").post(verifyJwt,getUserChannelProfile);
 
 export default router;

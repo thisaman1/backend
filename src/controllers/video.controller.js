@@ -6,8 +6,13 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { deleteImageFromCloudinary, deleteVideoFromCloudinary, uploadToCloudinary } from "../utils/cloudinary.js";
 import { isEmpty } from "../utils/validations.js";
 
+//get all videos based on query, sort, pagination
+const getAllVideos = asyncHandler(async(req,res)=>{
+    const { page=1,limit=10,query,sortBy,sortType,userId } = req.query;
+    
+})
+
 //video upload(contains video && thumbnail from multer), title, description, duration from cloudinary response
-//
 const publishAVideo = asyncHandler(async (req,res)=>{
     if(!req.files || !req.files.videoFile || !req.files.thumbnail){
         throw new ApiError(400,"Video and thumbnail is required");
@@ -159,9 +164,6 @@ const updateDetails = asyncHandler(async(req,res)=>{
     return res.status(200)
     .json(new ApiResponse(200,video,"Fields updated"));
 })
-
-
-
 
 export {
     publishAVideo,
