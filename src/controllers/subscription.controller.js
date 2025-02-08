@@ -36,6 +36,43 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,isSubscriber,"Subscription Handled"));
 });
 
+const getAllSubscriber = asyncHandler(async(req,res)=>{
+    const user = req.user;
+    
+    const subscribers = await Subscription.aggregate(
+        [
+            {
+                $match:{
+                    channel: user._id
+                }
+            }
+        ]
+    );
 
+    // console.log(subscribers);
+    return res.status(200)
+    .json(new ApiResponse(200,subscribers,"Subscribers returned"));
+});
 
-export {toggleSubscription};
+const getAllChannelsSubscribed = asyncHandler(async(req,res)=>{
+    const user = req.user;
+
+    const channels = await Subscription.aggregate(
+        [
+            {
+                $match:{
+                    subscriber: user._id
+                }
+            }
+        ]
+    );
+
+    return res.status(200)
+    .json(new ApiResponse(200,channels,"Channels returned"));
+});
+
+export {
+    toggleSubscription,
+    getAllSubscriber,
+    getAllChannelsSubscribed
+};
