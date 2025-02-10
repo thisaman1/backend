@@ -5,7 +5,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-
 const toggleSubscription = asyncHandler(async(req,res)=>{
     const {channelId} = req.params;
     const user = req.user;
@@ -49,9 +48,10 @@ const getAllSubscriber = asyncHandler(async(req,res)=>{
         ]
     );
 
+    const subscribersList = subscribers.map((sub)=>sub.subscriber);
     // console.log(subscribers);
     return res.status(200)
-    .json(new ApiResponse(200,subscribers,"Subscribers returned"));
+    .json(new ApiResponse(200,subscribersList,"Subscribers returned"));
 });
 
 const getAllChannelsSubscribed = asyncHandler(async(req,res)=>{
@@ -67,8 +67,9 @@ const getAllChannelsSubscribed = asyncHandler(async(req,res)=>{
         ]
     );
 
+    const channelsList = channels.map((channel)=>channel.channel);
     return res.status(200)
-    .json(new ApiResponse(200,channels,"Channels returned"));
+    .json(new ApiResponse(200,channelsList,"Channels returned"));
 });
 
 export {
