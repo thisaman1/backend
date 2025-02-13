@@ -38,10 +38,8 @@ const toggleVideoLike = asyncHandler(async(req,res)=>{
 });
 
 const toggleCommentLike = asyncHandler(async(req,res)=>{
-    const {videoId, commentId} = req.params;
-    if(!videoId){
-        throw new ApiError(400,"VideoId invalid");
-    }
+    const {commentId} = req.params;
+
     if(!commentId){
         throw new ApiError(400,"CommentId invalid");
     }
@@ -51,6 +49,7 @@ const toggleCommentLike = asyncHandler(async(req,res)=>{
         likedBy: req.user._id
     });
 
+    // console.log(isLiked);
     if(!isLiked){
         await Like.create({
             comment: commentId,
@@ -61,7 +60,7 @@ const toggleCommentLike = asyncHandler(async(req,res)=>{
     }
     else{
         await Like.findOneAndDelete({
-            id: isLiked._id
+            _id: isLiked?._id
         });
         return res.status(200)
         .json(new ApiResponse(200,{},"Comment Unliked"));
