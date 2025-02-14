@@ -1,10 +1,9 @@
+import mongoose,{isValidObjectId, ObjectId} from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-// import {ObjectId } from "mongoose";
-import mongoose from "mongoose";
 
 const commentOnVideo = asyncHandler(async(req,res)=>{
     const {content} = req.body;
@@ -12,7 +11,7 @@ const commentOnVideo = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"No content in comment");
     }
     const {videoId} = req.params;
-    if(!videoId){
+    if(!isValidObjectId(videoId)){
         throw new ApiError(400,"VideoId invalid");
     }
 
@@ -25,7 +24,7 @@ const commentOnVideo = asyncHandler(async(req,res)=>{
     const comment = await Comment.create({
         content: content,
         video: videoId,
-        owner: req.user._id
+        owner: req.user?._id
     });
 
     return res.status(200)
@@ -101,7 +100,7 @@ const commentOnTweet = asyncHandler(async(req,res)=>{
 });
 
 const deleteComment = asyncHandler(async(req,res)=>{
-    const {commentId} = req.query;
+    const {commentId} = req.params;
 
     if(!commentId){
         throw new ApiError(400,"CommentId invalid");
@@ -109,7 +108,7 @@ const deleteComment = asyncHandler(async(req,res)=>{
 
     await Comment.findOneAndDelete(
         {
-            _id: new mongoose.Types.ObjectId(commentId)
+            _id: commentId
         }
     );
 
@@ -118,55 +117,61 @@ const deleteComment = asyncHandler(async(req,res)=>{
 });
 
 const getAllVideoComment = asyncHandler(async(req,res)=>{
-    const {videoId} = req.query;
+    const {videoId} = req.params;
     // console.log(videoId);
-    if(!videoId){
+    if(!isValidObjectId(videoId)){
         throw new ApiError(400,"Invalid VideoId");
     }
-    // console.log(vidId);
-    const pipeline = [
-            {
-                $match:{
-                    video: new mongoose.Types.ObjectId(videoId)
-                }
-            },
-            {
-                $project:{
-                    _id: 0,
-                    content:1,
-                    owner: 1
-                }
+    // console.log(videoId);
+    // const vidId = Schema.Types.ObjectId(videoId);
+    const commentList = await Comment.aggregate(
+    [
+        {
+            $match:{
+                video: mongoose.Types.ObjectId.createFromHexString(videoId)
             }
-    ];
-
-    const commentList = await Comment.aggregate(pipeline);
+        },
+        {
+            $project:{
+                _id:0,
+                content:1,
+                owner: 1
+            }
+        }
+    ]);
+    // const comment = await Comment.find({
+    //     video: videoId
+    // })
+    // console.log()
+    // console.log(commentList);
     return res.status(200)
     .json(new ApiResponse(200,commentList,"CommentList returned"));
 });
 
 const getAllTweetComment = asyncHandler(async(req,res)=>{
-    const {tweetId} = req.query;
+    const {tweetId} = req.params;
 
     if(!tweetId){
         throw new ApiError(400,"Invalid tweetId");
     }
 
-    const commentList = await Comment.aggregate(
-        [
-            {
-                $match:{
-                    tweet: tweetId
-                }
-            },
-            {
-                $project:{
-                    _id:0,
-                    content: 1
-                }
+    console.log(typeof(tweetId));
+    const commentList = await Comment.aggregate([
+        {
+            $match:{
+                tweet: mongoose.Types.ObjectId.createFromHexString(tweetId)
             }
-        ]
-    );
-
+        },
+        {
+            $project:{
+                _id:0,
+                content: 1,
+                owner: 1
+            }
+        }
+    ]);
+    // console.log(commentList);
+    
     return res.status(200)
     .json(new ApiResponse(200,commentList,"CommentList returned"));
 });

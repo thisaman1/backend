@@ -20,6 +20,9 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
         await Subscription.findOneAndDelete({
             _id: isSubscriber._id
         })
+
+        return res.status(200)
+        .json(new ApiResponse(200,{},"Unsubscribed"));
     }
     else{
         // console.log("creation");
@@ -29,10 +32,9 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
                 subscriber: req.user?._id
             }
         )
+        return res.status(200)
+        .json(new ApiResponse(200,{},"Subscribed"));
     }
-
-    return res.status(200)
-    .json(new ApiResponse(200,isSubscriber,"Subscription Handled"));
 });
 
 const getAllSubscriber = asyncHandler(async(req,res)=>{

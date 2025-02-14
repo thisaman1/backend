@@ -5,15 +5,14 @@ import { verifyJwt } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 //public route
-router.route("/get-all-video-comment").get(getAllVideoComment);
-router.route("/get-all-tweet-comment").get(getAllTweetComment);
+router.route("/videos/:videoId").get(getAllVideoComment);
+router.route("/tweets/:tweetId").get(getAllTweetComment);
 
 //secure route
 router.use(verifyJwt);
-router.route("/comment-on-video/:videoId").post(commentOnVideo);
-router.route("/comment-on-comment/:commentId").post(commentOnComment);
-router.route("/comment-on-tweet/:tweetId").post(commentOnTweet);
-router.route("/update-comment/:commentId").post(updateComment);
-router.route("/delete-comment").get(deleteComment);
+router.route("/v/:videoId").post(commentOnVideo);
+router.route("/c/:commentId").post(commentOnComment);
+router.route("/t/:tweetId").post(commentOnTweet);
+router.route("/:commentId").patch(updateComment).delete(deleteComment);
 
 export default router;

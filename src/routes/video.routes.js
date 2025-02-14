@@ -6,7 +6,7 @@ import { deleteVideo, getVideoById, publishAVideo, tooglePublishStatus, updateDe
 const router = Router();
 
 router.use(verifyJwt);
-router.route("/publish-a-video").post(
+router.route("/").post(
     upload.fields([
         {
             name: "videoFile",
@@ -20,10 +20,10 @@ router.route("/publish-a-video").post(
     publishAVideo
 );
 
-router.route("/get-video-by-id/:videoId").get(getVideoById);
-router.route("/delete-video/:videoId").post(deleteVideo);
-router.route("/toggle-publish-status/:videoId").post(tooglePublishStatus);
-router.route("/update-details/:videoId").post(
+router.route("/video/:videoId").get(getVideoById);
+router.route("/delete/:videoId").post(deleteVideo);
+router.route("/:videoId").post(tooglePublishStatus);
+router.route("/update/:videoId").post(
     upload.single("thumbnail"),
     updateDetails
 )

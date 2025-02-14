@@ -6,9 +6,9 @@ import { getAllLikedVideo, toggleCommentLike, toggleTweetLike, toggleVideoLike }
 const router = Router();
 
 router.use(verifyJwt);
-router.route("/toggle-video-like/:videoId").get(toggleVideoLike);
-router.route("/toggle-comment-like/:commentId").post(toggleCommentLike);
-router.route("/toggle-tweet-like/:tweetId").post(toggleTweetLike);
-router.route("/get-all-liked-video").get(getAllLikedVideo);
+router.route("/v/:videoId").get(toggleVideoLike);
+router.route("/c/:commentId").get(toggleCommentLike);
+router.route("/t/:tweetId").get(toggleTweetLike);
+router.route("/").get(getAllLikedVideo);
 
 export default router;
