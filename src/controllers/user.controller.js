@@ -6,7 +6,7 @@ import {isEmpty,isValidEmail,isValidPassword} from "../utils/validations.js"
 import { uploadToCloudinary, deleteVideoFromCloudinary, deleteImageFromCloudinary} from "../utils/cloudinary.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
-import { trusted } from "mongoose";
+import mongoose,{ isValidObjectId, trusted } from "mongoose";
 
 const generateAccessTokenAndRefreshToken= async(user_id)=>{
     try {
@@ -41,12 +41,12 @@ const registerUser = asyncHandler(async (req,res) => {
 
     //get details from frontend
     const {fullName, email, password, userName} = req.body;
-
+    // console.log(fullName,email,password,userName);
     //check if fields are empty
-    if(isEmpty(fullName))throw new ApiError(400,"Full name is required");
+    if(isEmpty(fullName) || !fullName)throw new ApiError(400,"Full name is required");
     if(isEmpty(email))throw new ApiError(400,"Email is required");
     if(isEmpty(password))throw new ApiError(400,"password is required");
-    if(isEmpty(userName))throw new ApiError(400,"userName is required");
+    if(isEmpty(userName) || !userName)throw new ApiError(400,"userName is required");
     
     //check if email and password is valid, email and userName is unique
     if(!isValidEmail(email))throw new ApiError(400,"Email is not valid");
@@ -108,12 +108,12 @@ const loginUser = asyncHandler(async (req,res)=>{
     //if doesn't exist tell user to register
     //if exists check password
     //if correct send accessToken and refreshToken to user via cookie(secure cookie)
-    const {userName, password} = req.body;
-    if(isEmpty(userName) || isEmpty(password)){
-        throw new ApiError(400,"username or password cannot be empty");
+    const {email, password} = req.body;
+    if(isEmpty(email) || isEmpty(password)){
+        throw new ApiError(400,"email or password cannot be empty");
     }
     const user = await User.findOne({
-        userName
+        email: email
     })
     if(!user){
         throw new ApiError(400,"User doesn't exist! Please Register");
@@ -262,13 +262,13 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
     const {fullName,email} = req.body;
-
+    console.log(req.body);
     if(!(fullName || email)){
         throw new ApiError(400,"All details are required");
     }
 
     const user = await User.findByIdAndUpdate(
-        req.body?._id,
+        req.user?._id,
         {
             $set:{
                 fullName: fullName,
@@ -276,8 +276,12 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
             }
         },
         {new: true}
-    ).select("-password")
+    ).select("-password refreshToken")
 
+    if(!user){
+        throw new ApiError(400,"User not found");
+    }
+    // console.log(user);
     return res.status(200)
     .json(new ApiResponse(200,user,"Details Updated Successfully"));
 })
@@ -424,7 +428,93 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
     .json(
         new ApiResponse(200,channel[0],"user channel fetched")
     )
-})
+});
+
+const getchannelById =  asyncHandler(async(req,res)=>{
+    const {channelId} = req.params;
+
+    if(!isValidObjectId(channelId)){
+        throw new ApiError(400,"Invalid Id");
+    }
+    const pipeline = [
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(channelId)
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup:{
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $lookup:{
+                from:"likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likedVideos"
+            }
+        },
+        {
+            $addFields:{
+                subscriberCount:{
+                    $size: "$subscribers"
+                },
+                subscribedToCount:{
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user?._id,"$subscribers.subscriber"]},
+                        then: true,
+                        else: false
+                    }
+                },
+                isVideoLiked:{
+                    $cond:{
+                        if:{$in: [req.user?._id,"$likedVideos"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName:1,
+                userName:1,
+                email:1,
+                avatar:1,
+                coverImage:1,
+                subscriberCount:1,
+                subscribedToCount:1,
+                isSubscribed:1,
+                isVideoLiked:1,
+            }
+        }
+    ];
+
+    const user = await User.aggregate(pipeline);
+
+    // console.log(user);
+    if(!user){
+        throw new ApiError(400,"Channel not found");
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(200,user,"User found"));
+});
 
 export {
     registerUser,
@@ -436,5 +526,6 @@ export {
     updateAccountDetails,
     updateAvatarImage,
     updateCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getchannelById
 }

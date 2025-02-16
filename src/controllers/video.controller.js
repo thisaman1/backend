@@ -5,12 +5,78 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { deleteImageFromCloudinary, deleteVideoFromCloudinary, uploadToCloudinary } from "../utils/cloudinary.js";
 import { isEmpty } from "../utils/validations.js";
+import mongoose, { isValidObjectId } from "mongoose";
 
 //get all videos based on query, sort, pagination
 const getAllVideos = asyncHandler(async(req,res)=>{
-    const { page=1,limit=10,query,sortBy,sortType,userId } = req.query;
+    let { page=1,limit=10,query,sortBy='createdAt',sortType='desc',userId } = req.query;
     
-})
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const skip = (page - 1) * limit;
+
+    let filter = {};
+    if (query) {
+        filter.$or = [
+            { title: { $regex: query, $options: "i" } }, // Case-insensitive title match
+            { description: { $regex: query, $options: "i" } } // Case-insensitive description match
+        ];
+    }
+    if (userId && userId !== 'null') {
+        filter.user = userId; // Apply the user filter if userId is valid
+    }
+
+    console.log("Filter:", filter);
+
+    let sort = {};
+    sort[sortBy] = sortType === "desc" ? -1 : 1;
+
+    const pipeline = [
+        {
+            $match: filter // Apply filter based on query and userId
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails"
+            }
+        },
+        {
+            $unwind: "$ownerDetails" // Convert ownerDetails array into an object
+        },
+        {
+            $sort: sort
+        },
+        {
+            $skip: skip
+        },
+        {
+            $limit: limit
+        }
+    ];
+        // Fetch videos from database
+    const videos = await Video.aggregate(pipeline)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit);
+
+        console.log(videos);
+    // Get total count for pagination metadata
+    const totalVideos = await Video.countDocuments(filter);
+
+    return res.status(200).
+    json(new ApiResponse(200,
+        {
+            totalVideos,
+            page,
+            totalPages:Math.ceil(totalVideos / limit),
+            videos
+        },
+        "Videos Returned")
+    );
+});
 
 //video upload(contains video && thumbnail from multer), title, description, duration from cloudinary response
 const publishAVideo = asyncHandler(async (req,res)=>{
@@ -83,8 +149,41 @@ const deleteVideo = asyncHandler(async(req,res)=>{
 
 const getVideoById = asyncHandler(async(req,res)=>{
     const {videoId} = req.params;
+
+    if(!isValidObjectId(videoId)){
+        throw new ApiError(400,"Invalid VideoId");
+    }
     // console.log(typeof(videoId));
-    const video = await Video.findById(videoId);
+    const pipeline = [
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup:{
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "totalLikes"
+            }
+        },
+        {
+            $addFields:{
+                likesCount:{
+                    $size: "$totalLikes"
+                },
+                isVideoLiked:{
+                    $cond:{
+                        if:{$in:[req.user?._id,"$totalLikes.likedBy"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        }
+    ]
+    const video = await Video.aggregate(pipeline);
 
     if(!video)throw new ApiError(401,"Video not found");
 
@@ -166,6 +265,7 @@ const updateDetails = asyncHandler(async(req,res)=>{
 })
 
 export {
+    getAllVideos,
     publishAVideo,
     getVideoById,
     deleteVideo,

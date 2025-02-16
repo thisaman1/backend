@@ -15,7 +15,7 @@ const commentOnVideo = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"VideoId invalid");
     }
 
-    const video = await Video.findOne({_id: videoId});
+    const video = await Video.findOne({_id: new mongoose.Types.ObjectId(videoId)});
 
     if(!video){
         throw new ApiError(400,"Video Not found");
@@ -23,7 +23,7 @@ const commentOnVideo = asyncHandler(async(req,res)=>{
 
     const comment = await Comment.create({
         content: content,
-        video: videoId,
+        video: new mongoose.Types.ObjectId(videoId),
         owner: req.user?._id
     });
 
@@ -71,7 +71,7 @@ const commentOnComment = asyncHandler(async(req,res)=>{
     const comment = await Comment.create({
         content: content,
         comment: commentId,
-        owner:req.user._id
+        owner: req.user._id
     })
 
     return res.status(200)
@@ -108,7 +108,7 @@ const deleteComment = asyncHandler(async(req,res)=>{
 
     await Comment.findOneAndDelete(
         {
-            _id: commentId
+            _id: new mongoose.Types.ObjectId(commentId)
         }
     );
 
@@ -127,23 +127,35 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
     const commentList = await Comment.aggregate(
     [
         {
-            $match:{
-                video: mongoose.Types.ObjectId.createFromHexString(videoId)
+            $match: {
+                video: new mongoose.Types.ObjectId(videoId),
             }
         },
         {
-            $project:{
-                _id:0,
-                content:1,
-                owner: 1
+            $lookup: {
+                from: 'users', // Replace with your users collection name
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'ownerDetails',
+            }
+        },
+        {
+            $unwind: {
+                path: '$ownerDetails',
+                preserveNullAndEmptyArrays: true,
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                content: 1,
+                'ownerDetails._id': 1,
+                'ownerDetails.userName': 1,
+                'ownerDetails.avatar': 1, // Add other user details you need
             }
         }
     ]);
-    // const comment = await Comment.find({
-    //     video: videoId
-    // })
-    // console.log()
-    // console.log(commentList);
+
     return res.status(200)
     .json(new ApiResponse(200,commentList,"CommentList returned"));
 });
@@ -159,7 +171,7 @@ const getAllTweetComment = asyncHandler(async(req,res)=>{
     const commentList = await Comment.aggregate([
         {
             $match:{
-                tweet: mongoose.Types.ObjectId.createFromHexString(tweetId)
+                tweet: new mongoose.Types.ObjectId(tweetId)
             }
         },
         {
