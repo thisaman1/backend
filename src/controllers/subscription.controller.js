@@ -9,10 +9,18 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
     const {channelId} = req.params;
     const user = req.user;
     if(!(isValidObjectId(channelId) || !(isValidObjectId(req.user?._id))))throw new ApiError(400,"Invalid channel or userId");
+    // if(!channelId){
+    //     throw new ApiError(400,"ChannelId invalid");
+    // }
+    // if(!user){
+    //     throw new ApiError(400,"User not found");
+    // }
 
+    // console.log(channelId);
+    // console.log(user._id);
     const isSubscriber = await Subscription.exists({
-        subscriber: req.user?._id,
-        channel: channelId
+        subscriber: new mongoose.Types.ObjectId(user._id),
+        channel: new mongoose.Types.ObjectId(channelId)
     });
 
     if(isSubscriber){
@@ -22,7 +30,7 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
         })
 
         return res.status(200)
-        .json(new ApiResponse(200,{},"Unsubscribed"));
+        .json(new ApiResponse(200,{isSubscribed: false},"Unsubscribed"));
     }
     else{
         // console.log("creation");
@@ -33,7 +41,7 @@ const toggleSubscription = asyncHandler(async(req,res)=>{
             }
         )
         return res.status(200)
-        .json(new ApiResponse(200,{},"Subscribed"));
+        .json(new ApiResponse(200,{isSubscribed: true},"Subscribed"));
     }
 });
 
@@ -65,13 +73,31 @@ const getAllChannelsSubscribed = asyncHandler(async(req,res)=>{
                 $match:{
                     subscriber: user._id
                 }
-            }
+            },
+            {
+                $lookup: {
+                  from: "users", // name of the collection holding channel/user details
+                  localField: "channel", // field in Subscription referencing the channel user id
+                  foreignField: "_id", // field in the users collection
+                  as: "channelDetails",
+                },
+            },
+            { 
+                $unwind: "$channelDetails" 
+            },
+            {
+                $project: {
+                  id: "$channelDetails._id",
+                  name: "$channelDetails.userName",
+                  // If 'avatar' is an array and you want the first element:
+                  avatarUrl: { $arrayElemAt: ["$channelDetails.avatar", 0] },
+                },
+            },
         ]
     );
-
-    const channelsList = channels.map((channel)=>channel.channel);
+    // const channelsList = channels.map((channel)=>channel.channel);
     return res.status(200)
-    .json(new ApiResponse(200,channelsList,"Channels returned"));
+    .json(new ApiResponse(200,channels,"Channels returned"));
 });
 
 export {

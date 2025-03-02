@@ -127,14 +127,23 @@ const loginUser = asyncHandler(async (req,res)=>{
     const {accessToken,refreshToken} = await generateAccessTokenAndRefreshToken(user._id);
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
+    if(!loggedInUser){
+        throw new ApiError(400,"user not found");
+    }
+
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'None'
     }
     
+    // console.log("Setting cookies...");
+    res.cookie("accessToken",accessToken,options);
+    res.cookie('refreshToken',refreshToken,options);
+
+    // console.log("Set-Cookie Headers:", res.getHeaders()["set-cookie"]);
+    // console.log("Login:",req.cookies);
     return res.status(200)
-    .cookie("accessToken",accessToken,options)
-    .cookie("refreshToken",refreshToken,options)
     .json(
         new ApiResponse(
             200,
@@ -163,7 +172,8 @@ const logoutUser = asyncHandler(async (req,res)=>{
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'none'
     }
 
     return res.status(200)
@@ -201,7 +211,8 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
     
         const options={
             httpOnly: true,
-            secure: true
+            secure: true,
+            sameSite: 'None'
         }
     
         return res.status(200)

@@ -6,7 +6,7 @@ const app = express();
 
 //To share cross origin requests
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: "http://localhost:8080",
     credentials: true
 }))
 //to accept json data

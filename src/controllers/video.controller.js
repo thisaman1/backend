@@ -23,10 +23,10 @@ const getAllVideos = asyncHandler(async(req,res)=>{
         ];
     }
     if (userId && userId !== 'null') {
-        filter.user = userId; // Apply the user filter if userId is valid
+        filter.owner = new mongoose.Types.ObjectId(userId); // Apply the user filter if userId is valid
     }
 
-    console.log("Filter:", filter);
+    // console.log("Filter:", filter);
 
     let sort = {};
     sort[sortBy] = sortType === "desc" ? -1 : 1;
@@ -62,7 +62,7 @@ const getAllVideos = asyncHandler(async(req,res)=>{
         .skip(skip)
         .limit(limit);
 
-        console.log(videos);
+    // console.log(videos);
     // Get total count for pagination metadata
     const totalVideos = await Video.countDocuments(filter);
 

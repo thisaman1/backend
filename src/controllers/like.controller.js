@@ -4,7 +4,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-
 const toggleVideoLike = asyncHandler(async(req,res)=>{
     const {videoId} = req.params;
     // console.log(videoId);
@@ -34,7 +33,7 @@ const toggleVideoLike = asyncHandler(async(req,res)=>{
     }
 
     return res.status(200)
-    .json(new ApiResponse(200,{},message));
+    .json(new ApiResponse(200,{isLiked:!isLiked},message));
 });
 
 const toggleCommentLike = asyncHandler(async(req,res)=>{

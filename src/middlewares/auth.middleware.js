@@ -4,9 +4,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken"
 
 const verifyJwt = asyncHandler(async (req, _, next)=>{
+    // console.log("NEW:",req);
     try {
-        
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
+        // console.log("Auth:",req.cookies);
+        const token = await req?.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
         // console.log(token);
         
         if(!token){
@@ -14,7 +15,7 @@ const verifyJwt = asyncHandler(async (req, _, next)=>{
         }
         // console.log(process.env.ACCESS_TOKEN_SECRET);
         
-        const verifiedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
+        const verifiedToken = await jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);
         const user = await User.findById(verifiedToken?._id).select("-password -refreshToken");
     
         if(!user){
@@ -24,6 +25,7 @@ const verifyJwt = asyncHandler(async (req, _, next)=>{
         req.user = user;
         next()
     } catch (error) {
+        // console.log(error);
         throw new ApiError(401,error?.message || "Invalid AccessToken");
     }
 })

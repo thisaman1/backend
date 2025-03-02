@@ -29,7 +29,7 @@ router.route("/register").post(
     registerUser
 );
 
-router.route("/login").post(loginUser);
+router.route("/login").post(loginUser,verifyJwt);
 
 //secured route
 
@@ -40,6 +40,6 @@ router.route("/get-current-user").get(verifyJwt,getCurrentUser);
 router.route("/update-account-details").post(verifyJwt,upload.none(),updateAccountDetails);
 router.route("/update-avatar-image").post(verifyJwt,upload.single("avatar"),updateAvatarImage);
 router.route("/update-cover-image").post(verifyJwt,upload.single("coverImage"),updateCoverImage);
-router.route("/c/:userName").post(verifyJwt,getUserChannelProfile);
+router.route("/c/:userName").get(getUserChannelProfile);
 
 export default router;
