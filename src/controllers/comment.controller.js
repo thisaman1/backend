@@ -70,7 +70,7 @@ const commentOnComment = asyncHandler(async(req,res)=>{
 
     const comment = await Comment.create({
         content: content,
-        comment: commentId,
+        comment: new mongoose.Types.ObjectId(commentId),
         owner: req.user._id
     })
 
@@ -146,16 +146,29 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
             }
         },
         {
-            $project: {
-                _id: 0,
-                content: 1,
-                'ownerDetails._id': 1,
-                'ownerDetails.userName': 1,
-                'ownerDetails.avatar': 1, // Add other user details you need
-            }
+            $facet: {
+              comments: [
+                {
+                  $project: {
+                    _id: 1,
+                    content: 1,
+                    "ownerDetails._id": 1,
+                    "ownerDetails.userName": 1,
+                    "ownerDetails.avatar": 1,
+                    createdAt: 1,
+                  },
+                },
+              ],
+              totalCount: [
+                {
+                  $count: "length",
+                },
+              ],
+            },
         }
     ]);
 
+    // console.log(commentList);
     return res.status(200)
     .json(new ApiResponse(200,commentList,"CommentList returned"));
 });

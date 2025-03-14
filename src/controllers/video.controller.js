@@ -169,9 +169,31 @@ const getVideoById = asyncHandler(async(req,res)=>{
             }
         },
         {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails"
+            }
+        },
+        {
+            $unwind: "$ownerDetails" // Convert ownerDetails array into an object
+        },
+        {
+            $lookup:{
+                from: "subscriptions",
+                localField: "owner",
+                foreignField: "channel",
+                as: "channelSubscribers"
+            }
+        },
+        {
             $addFields:{
                 likesCount:{
                     $size: "$totalLikes"
+                },
+                subscribersCount:{
+                    $size: "$channelSubscribers"
                 },
                 isVideoLiked:{
                     $cond:{

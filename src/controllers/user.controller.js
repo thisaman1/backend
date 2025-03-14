@@ -25,10 +25,12 @@ const generateAccessTokenAndRefreshToken= async(user_id)=>{
 
 const registerUser = asyncHandler(async (req,res) => {
 
+    // console.log(req);
     if (!req.files || !req.files.avatar ) {
         // console.log(req);
         throw new ApiError(400,"Files not uploaded correctly");
     }
+    
     
     //get user details from frontend
     //validations on user details
