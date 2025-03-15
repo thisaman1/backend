@@ -132,6 +132,14 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
             }
         },
         {
+            $lookup:{
+                from: 'likes',
+                localField: '_id',
+                foreignField: 'comment',
+                as: 'likes'
+            }
+        },
+        {
             $lookup: {
                 from: 'users', // Replace with your users collection name
                 localField: 'owner',
@@ -146,6 +154,13 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
             }
         },
         {
+            $addFields:{
+                likes:{
+                    $size: '$likes'
+                }
+            }
+        },
+        {
             $facet: {
               comments: [
                 {
@@ -156,6 +171,7 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
                     "ownerDetails.userName": 1,
                     "ownerDetails.avatar": 1,
                     createdAt: 1,
+                    likes: 1,
                   },
                 },
               ],
