@@ -108,9 +108,40 @@ const getAllLikedVideo = asyncHandler(async(req,res)=>{
                 }
             },
             {
+                $lookup:{
+                    from: "videos",
+                    localField: "video",
+                    foreignField: "_id",
+                    as: "videos"
+                }
+            },
+            {
+                $unwind: "$videos"
+            },
+            {
+                $lookup: {
+                  from: "users",
+                  localField: "videos.owner",
+                  foreignField: "_id",
+                  as: "ownerDetails"
+                }
+            },
+            {
+                $unwind: "$ownerDetails" // Convert ownerDetails array into an object
+            },
+            {
+                $addFields:{
+                    "videos.ownerDetails": "$ownerDetails"
+                }
+            },
+            {
                 $project:{
-                    video:1,
-                    _id: 0
+                    "ownerDetails": 0
+                }
+            },
+            {
+                $replaceRoot:{
+                    newRoot: "$videos"
                 }
             }
         ]

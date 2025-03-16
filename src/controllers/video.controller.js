@@ -11,6 +11,7 @@ import mongoose, { isValidObjectId } from "mongoose";
 const getAllVideos = asyncHandler(async(req,res)=>{
     let { page=1,limit=10,query,sortBy='createdAt',sortType='desc',userId } = req.query;
     
+    // console.log("Query:", req.query);
     page = parseInt(page);
     limit = parseInt(limit);
     const skip = (page - 1) * limit;
