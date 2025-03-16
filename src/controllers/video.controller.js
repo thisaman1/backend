@@ -150,6 +150,8 @@ const deleteVideo = asyncHandler(async(req,res)=>{
 const getVideoById = asyncHandler(async(req,res)=>{
     const {videoId} = req.params;
 
+    // console.log('Authorization Header:', req.headers.authorization);
+
     if(!isValidObjectId(videoId)){
         throw new ApiError(400,"Invalid VideoId");
     }
@@ -198,6 +200,13 @@ const getVideoById = asyncHandler(async(req,res)=>{
                 isVideoLiked:{
                     $cond:{
                         if:{$in:[req.user?._id,"$totalLikes.likedBy"]},
+                        then: true,
+                        else: false
+                    }
+                },
+                isSubscribed:{
+                    $cond:{
+                        if:{$in:[req.user?._id,"$channelSubscribers.subscriber"]},
                         then: true,
                         else: false
                     }
