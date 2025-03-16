@@ -275,7 +275,7 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
     const {fullName,email} = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     if(!(fullName || email)){
         throw new ApiError(400,"All details are required");
     }
@@ -289,7 +289,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
             }
         },
         {new: true}
-    ).select("-password refreshToken")
+    ).select("-password -refreshToken")
 
     if(!user){
         throw new ApiError(400,"User not found");
