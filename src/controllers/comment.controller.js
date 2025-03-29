@@ -31,32 +31,6 @@ const commentOnVideo = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,comment,"Comment added"));
 });
 
-const updateComment = asyncHandler(async(req,res)=>{
-    const {content} = req.body;
-    if(!content){
-        throw new ApiError(400,"Content is Empty");
-    }
-    const {commentId} = req.params;
-    if(!commentId){
-        throw new ApiError(401,"CommentId invalid");
-    }
-
-    const comment = await Comment.findByIdAndUpdate(
-        commentId,
-        {
-            $set:{
-                content:content
-            }
-        },
-        {
-            new: true
-        }
-    )
-
-    return res.status(200)
-    .json(new ApiResponse(200,comment,"Comment Updated"));
-});
-
 const commentOnComment = asyncHandler(async(req,res)=>{
     const {content} = req.body;
     if(!content){
@@ -99,6 +73,32 @@ const commentOnTweet = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,comment,"Comment added"));
 });
 
+const updateComment = asyncHandler(async(req,res)=>{
+    const {content} = req.body;
+    if(!content){
+        throw new ApiError(400,"Content is Empty");
+    }
+    const {commentId} = req.params;
+    if(!commentId){
+        throw new ApiError(401,"CommentId invalid");
+    }
+
+    const comment = await Comment.findByIdAndUpdate(
+        commentId,
+        {
+            $set:{
+                content:content
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    return res.status(200)
+    .json(new ApiResponse(200,comment,"Comment Updated"));
+});
+
 const deleteComment = asyncHandler(async(req,res)=>{
     const {commentId} = req.params;
 
@@ -114,6 +114,78 @@ const deleteComment = asyncHandler(async(req,res)=>{
 
     return res.status(200)
     .json(new ApiResponse(200,{},"Comment deleted"));
+});
+
+const getAllReplies = asyncHandler(async(req,res)=>{
+    const {commentId} = req.params;
+
+    if(!isValidObjectId(commentId)){
+        throw new ApiError(400,"Invalid CommentId");
+    }
+
+    const repliesList = await Comment.aggregate(
+    [
+        {
+            $match:{
+                comment: new mongoose.Types.ObjectId(commentId),
+            }
+        },
+        {
+            $lookup:{
+                from: 'likes',
+                localField: '_id',
+                foreignField: 'comment',
+                as: 'likes'
+            }
+        },
+        {
+            $lookup: {
+                from: 'users', // Replace with your users collection name
+                localField: 'owner',
+                foreignField: '_id',
+                as: 'ownerDetails',
+            }
+        },
+        {
+            $lookup:{
+                from: 'comments',
+                localField: '_id',
+                foreignField: 'comment',
+                as: 'replies'
+            }
+        },
+        {
+            $unwind: {
+                path: '$ownerDetails',
+                preserveNullAndEmptyArrays: true,
+            }
+        },
+        {
+            $addFields:{
+                likes:{
+                    $size: '$likes'
+                },
+                replies:{
+                    $size: "$replies"
+                }
+            }
+        },
+        {
+            $project:{
+                _id: 1,
+                content: 1,
+                "ownerDetails._id": 1,
+                "ownerDetails.userName": 1,
+                "ownerDetails.avatar": 1,
+                createdAt: 1,
+                likes: 1,
+                replies: 1,
+            }
+        }
+    ]);
+
+    return res.status(200)
+    .json(new ApiResponse(200,repliesList,"RepliesList returned"));
 });
 
 const getAllVideoComment = asyncHandler(async(req,res)=>{
@@ -148,6 +220,14 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
             }
         },
         {
+            $lookup:{
+                from: 'comments',
+                localField: '_id',
+                foreignField: 'comment',
+                as: 'replies'
+            }
+        },
+        {
             $unwind: {
                 path: '$ownerDetails',
                 preserveNullAndEmptyArrays: true,
@@ -157,6 +237,9 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
             $addFields:{
                 likes:{
                     $size: '$likes'
+                },
+                replies:{
+                    $size: "$replies"
                 }
             }
         },
@@ -172,6 +255,7 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
                     "ownerDetails.avatar": 1,
                     createdAt: 1,
                     likes: 1,
+                    replies: 1,
                   },
                 },
               ],
@@ -217,6 +301,80 @@ const getAllTweetComment = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,commentList,"CommentList returned"));
 });
 
+const getCommentById = asyncHandler(async(req,res)=>{
+    const {commentId} = req.params;
+    // console.log(commentId);
+    if(!isValidObjectId(commentId)){
+        throw new ApiError(202,"invalid CommentId");
+    }
+
+    const comment = await Comment.aggregate(
+        [
+            {
+                $match:{
+                    _id: new mongoose.Types.ObjectId(commentId)
+                }
+            },
+            {
+                $lookup:{
+                    from: 'likes',
+                    localField: '_id',
+                    foreignField: 'comment',
+                    as: 'likes'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users', // Replace with your users collection name
+                    localField: 'owner',
+                    foreignField: '_id',
+                    as: 'ownerDetails',
+                }
+            },
+            {
+                $lookup:{
+                    from: 'comments',
+                    localField: '_id',
+                    foreignField: 'comment',
+                    as: 'replies'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$ownerDetails',
+                    preserveNullAndEmptyArrays: true,
+                }
+            },
+            {
+                $addFields:{
+                    likes:{
+                        $size: '$likes'
+                    },
+                    replies:{
+                        $size: "$replies"
+                    }
+                }
+            },
+            {
+                $project:{
+                    _id: 1,
+                    content: 1,
+                    "ownerDetails._id": 1,
+                    "ownerDetails.userName": 1,
+                    "ownerDetails.avatar": 1,
+                    createdAt: 1,
+                    likes: 1,
+                    replies: 1,
+                }
+            }
+        ]
+    );
+
+    // console.log(comment);
+    return res.status(200)
+    .json(new ApiResponse(200,comment,"Comment fetched"));
+});
+
 export{
     commentOnVideo,
     updateComment,
@@ -224,6 +382,8 @@ export{
     commentOnTweet,
     deleteComment,
     getAllVideoComment,
-    getAllTweetComment
+    getAllTweetComment,
+    getAllReplies,
+    getCommentById
 }
 
