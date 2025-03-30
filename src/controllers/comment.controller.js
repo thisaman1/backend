@@ -167,6 +167,13 @@ const getAllReplies = asyncHandler(async(req,res)=>{
                 },
                 replies:{
                     $size: "$replies"
+                },
+                isLiked:{
+                    $cond:{
+                        if: {$in:[req.user?.id,"$likes.likedBy"]},
+                        then: true,
+                        else: false
+                    }
                 }
             }
         },
@@ -240,6 +247,13 @@ const getAllVideoComment = asyncHandler(async(req,res)=>{
                 },
                 replies:{
                     $size: "$replies"
+                },
+                isLiked:{
+                    $cond:{
+                        if: {$in:[req.user?.id,"$likes.likedBy"]},
+                        then: true,
+                        else: false
+                    }
                 }
             }
         },
@@ -352,6 +366,13 @@ const getCommentById = asyncHandler(async(req,res)=>{
                     },
                     replies:{
                         $size: "$replies"
+                    },
+                    isLiked:{
+                        $cond:{
+                            if: {$in:[req.user?.id,"$likes.likedBy"]},
+                            then: true,
+                            else: false
+                        }
                     }
                 }
             },
